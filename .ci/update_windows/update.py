@@ -48,6 +48,22 @@ pygit2.option(pygit2.GIT_OPT_SET_OWNER_VALIDATION, 0)
 repo_path = str(sys.argv[1])
 repo = pygit2.Repository(repo_path)
 ident = pygit2.Signature('comfyui', 'comfy@ui')
+
+# Remember the branch before update so daily workflow can continue there.
+original_branch_name = None
+try:
+    if not repo.head_is_detached:
+        original_branch_name = repo.head.shorthand
+except:
+    original_branch_name = None
+
+# If started from detached HEAD (for example a tag), prefer returning to local/dev.
+if original_branch_name is None:
+    try:
+        if repo.lookup_branch("local/dev") is not None:
+            original_branch_name = "local/dev"
+    except:
+        pass
 try:
     print("stashing current changes")  # noqa: T201
     repo.stash(ident)
@@ -112,6 +128,17 @@ if "--stable" in sys.argv:
         repo.checkout(latest_tag)
 
 print("Done!")  # noqa: T201
+
+# Return to the previous branch (for example local/dev) before any early exits.
+if original_branch_name is not None and original_branch_name != "master":
+    try:
+        restore_branch = repo.lookup_branch(original_branch_name)
+        if restore_branch is not None:
+            print("restoring previous branch: {}".format(original_branch_name))  # noqa: T201
+            restore_ref = repo.lookup_reference(restore_branch.name)
+            repo.checkout(restore_ref)
+    except:
+        print("warning: could not restore previous branch {}".format(original_branch_name))  # noqa: T201
 
 self_update = True
 if len(sys.argv) > 2:
