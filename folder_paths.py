@@ -54,9 +54,15 @@ folder_names_and_paths["audio_encoders"] = ([os.path.join(models_dir, "audio_enc
 
 folder_names_and_paths["frame_interpolation"] = ([os.path.join(models_dir, "frame_interpolation")], supported_pt_extensions)
 
-output_directory = os.path.join(base_path, "output")
+if os.name == "nt":
+    io_base_path = os.path.abspath(r"D:\AigcProject\Confmyui")
+    output_directory = os.path.join(io_base_path, "output")
+    input_directory = os.path.join(io_base_path, "input")
+else:
+    output_directory = os.path.join(base_path, "output")
+    input_directory = os.path.join(base_path, "input")
+
 temp_directory = os.path.join(base_path, "temp")
-input_directory = os.path.join(base_path, "input")
 user_directory = os.path.join(base_path, "user")
 
 filename_list_cache: dict[str, tuple[list[str], dict[str, float], float]] = {}
@@ -101,11 +107,12 @@ def map_legacy(folder_name: str) -> str:
               "clip": "text_encoders"}
     return legacy.get(folder_name, folder_name)
 
-if not os.path.exists(input_directory):
-    try:
-        os.makedirs(input_directory)
-    except:
-        logging.error("Failed to create input directory")
+for required_dir, dir_name in ((input_directory, "input"), (output_directory, "output")):
+    if not os.path.exists(required_dir):
+        try:
+            os.makedirs(required_dir)
+        except:
+            logging.error(f"Failed to create {dir_name} directory")
 
 def set_output_directory(output_dir: str) -> None:
     global output_directory
