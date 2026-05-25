@@ -64,6 +64,7 @@ if original_branch_name is None:
             original_branch_name = "local/dev"
     except:
         pass
+
 try:
     print("stashing current changes")  # noqa: T201
     repo.stash(ident)
